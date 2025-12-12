@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Callable, Iterable
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import QApplication
 from PySide6.QtWidgets import (
     QHBoxLayout,
@@ -69,6 +69,17 @@ class MessageBubble(QWidget):
         self.layout().insertWidget(0, new_bubble.layout().itemAt(0).widget())
 
 
+class SendTextEdit(QPlainTextEdit):
+    send_requested = Signal()
+
+    def keyPressEvent(self, event):  # type: ignore[override]
+        if event.key() in (Qt.Key_Return, Qt.Key_Enter) and not (event.modifiers() & Qt.ShiftModifier):
+            self.send_requested.emit()
+            event.accept()
+            return
+        super().keyPressEvent(event)
+
+
 class ChatPanel(QWidget):
     def __init__(self, state: AppState, llm_client: LLMClient, on_state_changed: Callable[[], None]):
         super().__init__()
@@ -84,8 +95,9 @@ class ChatPanel(QWidget):
         self.messages_container.setLayout(self.messages_layout)
         self.scroll_area.setWidget(self.messages_container)
 
-        self.input = QPlainTextEdit()
+        self.input = SendTextEdit()
         self.input.setPlaceholderText("请输入消息……")
+        self.input.send_requested.connect(self.on_send_clicked)
         self.send_button = QPushButton("发送")
         self.send_button.clicked.connect(self.on_send_clicked)
         self.send_button.setAutoDefault(True)
