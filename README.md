@@ -10,10 +10,10 @@
 - **模拟 LLM 后端**：`MockLLMClient` 使用流式生成器实现简单的回显响应，方便 UI 演示。
 
 ## 运行方式
-确保环境中已安装 `PySide6`：
+可通过 `requirements.txt` 安装依赖（当前仅包含 PySide6）：
 
 ```bash
-pip install PySide6
+pip install -r requirements.txt
 ```
 
 然后启动应用：
