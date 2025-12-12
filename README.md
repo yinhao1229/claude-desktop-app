@@ -1,1 +1,25 @@
-# claude-desktop-app
+# Cherry 风格聊天桌面端（Python）
+
+这个仓库提供一个基于 PySide6 的简易聊天客户端，界面参考 Cherry Studio，包含三栏布局、会话管理、带代码块复制按钮的聊天渲染，以及用于本地演示的模拟 LLM 后端。
+
+## 功能特点
+- **三栏界面**：水平分栏的会话列表、聊天区和配置面板。
+- **会话管理**：支持新建、切换、重命名、删除会话，历史保存到 `data/sessions.json`。
+- **聊天体验**：用户/助手气泡、基础 Markdown 解析，代码块等宽字体显示并可一键复制，新消息自动滚动到底部。
+- **会话级配置**：每个会话保存 system prompt、temperature 与 max tokens 设置。
+- **模拟 LLM 后端**：`MockLLMClient` 使用流式生成器实现简单的回显响应，方便 UI 演示。
+
+## 运行方式
+确保环境中已安装 `PySide6`：
+
+```bash
+pip install PySide6
+```
+
+然后启动应用：
+
+```bash
+python main.py
+```
+
+若不存在历史数据，会自动创建一个默认会话。交互或关闭窗口时，会话会保存到 `data/sessions.json`。
