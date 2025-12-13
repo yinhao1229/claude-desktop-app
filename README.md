@@ -12,10 +12,16 @@
 - **模拟 LLM 后端**：`MockLLMClient` 使用流式生成器实现简单的回显响应，方便 UI 演示。
 
 ## 运行方式
-可通过 `requirements.txt` 安装依赖（当前仅包含 PySide6）：
+可通过 `requirements.txt` 安装基础依赖（当前仅包含 PySide6）：
 
 ```bash
 pip install -r requirements.txt
+```
+
+如需直接接入 Claude/其他 HTTP LLM，可额外安装对应 SDK 或 HTTP 客户端，例如：
+
+```bash
+pip install anthropic httpx
 ```
 
 然后启动应用：
