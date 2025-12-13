@@ -5,6 +5,7 @@ from typing import Callable, Iterable
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import QApplication
 from PySide6.QtWidgets import (
+    QFrame,
     QHBoxLayout,
     QLabel,
     QMessageBox,
@@ -132,7 +133,7 @@ class ChatPanel(QWidget):
         self.input.setPlaceholderText("请输入消息，按 Enter 发送")
         self.input.setMinimumHeight(48)
         self.input.setMaximumHeight(80)
-        self.input.setFrame(False)
+        self.input.setFrameStyle(QFrame.NoFrame)
         self.input.setStyleSheet(
             "QPlainTextEdit { padding: 10px 6px; font-size: 14px; border: none; color: #e5e7eb;"
             " background: transparent; }"
