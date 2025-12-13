@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
+    QLabel,
     QListWidget,
     QListWidgetItem,
     QMenu,
@@ -29,11 +30,20 @@ class SessionPanel(QWidget):
         self.list_widget.itemClicked.connect(self.on_item_clicked)
         self.list_widget.setContextMenuPolicy(Qt.CustomContextMenu)
         self.list_widget.customContextMenuRequested.connect(self.show_context_menu)
+        self.list_widget.setSpacing(6)
+        self.list_widget.setAlternatingRowColors(False)
 
         self.new_button = QPushButton("新建对话")
         self.new_button.clicked.connect(self.new_session_requested)
+        self.new_button.setFixedHeight(40)
+
+        title = QLabel("会话")
+        title.setStyleSheet("font-size: 16px; font-weight: 700; letter-spacing: 0.5px;")
 
         layout = QVBoxLayout()
+        layout.setContentsMargins(12, 12, 12, 12)
+        layout.setSpacing(10)
+        layout.addWidget(title)
         layout.addWidget(self.new_button)
         layout.addWidget(self.list_widget)
         self.setLayout(layout)

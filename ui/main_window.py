@@ -23,6 +23,24 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Cherry 风格聊天")
         self.resize(1200, 800)
 
+        self.setStyleSheet(
+            """
+            QMainWindow { background-color: #0b1221; color: #e5e7eb; }
+            QListWidget { background: #0f172a; border: 1px solid #1f2937; padding: 6px; }
+            QListWidget::item { padding: 10px; margin: 4px 2px; border-radius: 8px; color: #e5e7eb; }
+            QListWidget::item:selected { background: #1d4ed8; color: white; }
+            QPushButton { background: #1d4ed8; color: white; border: none; padding: 8px 12px; border-radius: 8px; font-weight: 600; }
+            QPushButton:hover:!disabled { background: #2563eb; }
+            QPushButton:disabled { background: #334155; color: #cbd5e1; }
+            QPlainTextEdit { background: #0b1221; color: #e5e7eb; border: 1px solid #1f2937; border-radius: 10px; padding: 10px; }
+            QGroupBox { border: 1px solid #1f2937; border-radius: 10px; margin-top: 10px; padding: 12px; }
+            QGroupBox::title { subcontrol-origin: margin; left: 12px; padding: 0 6px; color: #9ca3af; }
+            QLabel { color: #e5e7eb; }
+            QScrollArea { border: none; }
+            QFormLayout > * { color: #e5e7eb; }
+            """
+        )
+
         self.session_panel = SessionPanel(self.state)
         self.session_panel.session_selected.connect(self.on_session_selected)
         self.session_panel.session_deleted.connect(self.on_session_deleted)
@@ -37,6 +55,7 @@ class MainWindow(QMainWindow):
         splitter.addWidget(self.chat_panel)
         splitter.addWidget(self.config_panel)
         splitter.setSizes([200, 700, 300])
+        splitter.setHandleWidth(2)
         self.setCentralWidget(splitter)
 
         if not self.state.sessions:

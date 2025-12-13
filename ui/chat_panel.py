@@ -11,6 +11,8 @@ from PySide6.QtWidgets import (
     QPushButton,
     QPlainTextEdit,
     QScrollArea,
+    QSpacerItem,
+    QSizePolicy,
     QVBoxLayout,
     QWidget,
 )
@@ -24,12 +26,21 @@ class CodeBlockWidget(QWidget):
     def __init__(self, code: str):
         super().__init__()
         layout = QVBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(6)
+
         self.code_label = QLabel()
         self.code_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
-        self.code_label.setStyleSheet("background-color: #2e2e2e; color: #e6e6e6; font-family: monospace; padding: 8px;")
+        self.code_label.setStyleSheet(
+            "background-color: #0f172a; color: #e6e6e6; font-family: 'JetBrains Mono', 'Cascadia Code', monospace;"
+            "padding: 10px; border: 1px solid #1f2937; border-radius: 10px;"
+        )
         self.code_label.setText(render_text_as_html(code))
-        copy_button = QPushButton("复制")
+        copy_button = QPushButton("复制代码")
+        copy_button.setFixedWidth(90)
         copy_button.clicked.connect(lambda: self.copy_code(code))
+        copy_button.setStyleSheet("padding: 6px 10px; font-weight: 600;")
+
         layout.addWidget(copy_button, alignment=Qt.AlignRight)
         layout.addWidget(self.code_label)
         self.setLayout(layout)
@@ -43,30 +54,48 @@ class CodeBlockWidget(QWidget):
 class MessageBubble(QWidget):
     def __init__(self, message: Message, align_right: bool = False):
         super().__init__()
+        self.align_right = align_right
+
         layout = QVBoxLayout()
         layout.setAlignment(Qt.AlignRight if align_right else Qt.AlignLeft)
-        bubble = QWidget()
-        bubble_layout = QVBoxLayout()
-        bubble_layout.setContentsMargins(8, 8, 8, 8)
-        bubble.setLayout(bubble_layout)
-        bubble.setStyleSheet(
-            "background-color: #f0f0f0; border-radius: 8px;" if align_right else "background-color: #1f2937; color: white; border-radius: 8px;"
+        layout.setContentsMargins(2, 4, 2, 4)
+
+        self.bubble = QWidget()
+        self.bubble.setMaximumWidth(780)
+        self.bubble_layout = QVBoxLayout()
+        self.bubble_layout.setContentsMargins(14, 10, 14, 12)
+        self.bubble_layout.setSpacing(8)
+        self.bubble.setLayout(self.bubble_layout)
+        self.bubble.setStyleSheet(
+            "background-color: #1d4ed8; color: white; border-radius: 12px;"
+            if align_right
+            else "background-color: #0f172a; color: #e5e7eb; border: 1px solid #1f2937; border-radius: 12px;"
         )
-        for block_type, content in parse_markdown_blocks(message.content):
+
+        self.render_content(message.content)
+        layout.addWidget(self.bubble, alignment=Qt.AlignRight if align_right else Qt.AlignLeft)
+        self.setLayout(layout)
+
+    def render_content(self, content: str) -> None:
+        while self.bubble_layout.count():
+            item = self.bubble_layout.takeAt(0)
+            widget = item.widget()
+            if widget:
+                widget.deleteLater()
+
+        for block_type, text in parse_markdown_blocks(content):
             if block_type == "code":
-                bubble_layout.addWidget(CodeBlockWidget(content))
+                self.bubble_layout.addWidget(CodeBlockWidget(text))
             else:
                 label = QLabel()
                 label.setTextInteractionFlags(Qt.TextSelectableByMouse)
-                label.setText(render_text_as_html(content))
-                bubble_layout.addWidget(label)
-        layout.addWidget(bubble, alignment=Qt.AlignRight if align_right else Qt.AlignLeft)
-        self.setLayout(layout)
+                label.setWordWrap(True)
+                label.setText(render_text_as_html(text))
+                label.setStyleSheet("font-size: 14px; line-height: 1.5;")
+                self.bubble_layout.addWidget(label)
 
     def update_content(self, content: str) -> None:
-        self.layout().itemAt(0).widget().deleteLater()
-        new_bubble = MessageBubble(Message(role="assistant", content=content), align_right=False)
-        self.layout().insertWidget(0, new_bubble.layout().itemAt(0).widget())
+        self.render_content(content)
 
 
 class SendTextEdit(QPlainTextEdit):
@@ -86,27 +115,37 @@ class ChatPanel(QWidget):
         self.state = state
         self.llm_client = llm_client
         self.on_state_changed = on_state_changed
+        self.message_widgets: list[MessageBubble] = []
 
         self.scroll_area = QScrollArea()
         self.scroll_area.setWidgetResizable(True)
+        self.scroll_area.setStyleSheet("background: #0b1221;")
         self.messages_container = QWidget()
         self.messages_layout = QVBoxLayout()
-        self.messages_layout.addStretch()
+        self.messages_layout.setContentsMargins(24, 16, 24, 24)
+        self.messages_layout.setSpacing(14)
+        self.messages_layout.addItem(QSpacerItem(0, 0, QSizePolicy.Minimum, QSizePolicy.Expanding))
         self.messages_container.setLayout(self.messages_layout)
         self.scroll_area.setWidget(self.messages_container)
 
         self.input = SendTextEdit()
         self.input.setPlaceholderText("请输入消息……")
+        self.input.setMinimumHeight(80)
         self.input.send_requested.connect(self.on_send_clicked)
         self.send_button = QPushButton("发送")
         self.send_button.clicked.connect(self.on_send_clicked)
         self.send_button.setAutoDefault(True)
+        self.send_button.setFixedHeight(44)
 
         input_layout = QHBoxLayout()
+        input_layout.setContentsMargins(8, 8, 8, 8)
+        input_layout.setSpacing(10)
         input_layout.addWidget(self.input)
         input_layout.addWidget(self.send_button)
 
         layout = QVBoxLayout()
+        layout.setContentsMargins(12, 10, 12, 12)
+        layout.setSpacing(10)
         layout.addWidget(self.scroll_area)
         layout.addLayout(input_layout)
         self.setLayout(layout)
@@ -118,12 +157,14 @@ class ChatPanel(QWidget):
             widget = item.widget()
             if widget:
                 widget.deleteLater()
+        self.message_widgets.clear()
         session = self.state.active_session
         if not session:
             return
         for message in session.messages:
             bubble = MessageBubble(message, align_right=message.role == "user")
             self.messages_layout.insertWidget(self.messages_layout.count() - 1, bubble)
+            self.message_widgets.append(bubble)
         self.scroll_to_bottom()
 
     def scroll_to_bottom(self) -> None:
@@ -157,7 +198,12 @@ class ChatPanel(QWidget):
         assistant_message = self.state.active_session.messages[-1]
         for chunk in stream:
             assistant_message.content += chunk
-            self.refresh_messages()
+            if self.message_widgets:
+                self.message_widgets[-1].update_content(assistant_message.content)
+            else:
+                self.refresh_messages()
+            QApplication.processEvents()
+            self.scroll_to_bottom()
         self.set_loading(False)
         self.on_state_changed()
 

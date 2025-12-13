@@ -19,6 +19,8 @@ class ConfigPanel(QWidget):
         super().__init__()
         self.state = state
 
+        self.setMinimumWidth(280)
+
         self.model_input = QLineEdit("mock")
         self.temperature_input = QLineEdit("1.0")
         self.max_tokens_input = QSpinBox()
@@ -27,8 +29,11 @@ class ConfigPanel(QWidget):
         self.max_tokens_input.setValue(0)
         self.system_prompt_input = QPlainTextEdit()
         self.system_prompt_input.setPlaceholderText("为当前会话设置的系统提示语……")
+        self.system_prompt_input.setMinimumHeight(140)
 
         form = QFormLayout()
+        form.setSpacing(12)
+        form.setLabelAlignment(Qt.AlignLeft)
         form.addRow("模型", self.model_input)
         form.addRow("温度", self.temperature_input)
         form.addRow("最大生成 Token", self.max_tokens_input)
@@ -38,6 +43,8 @@ class ConfigPanel(QWidget):
         box.setLayout(form)
 
         layout = QVBoxLayout()
+        layout.setContentsMargins(12, 12, 12, 12)
+        layout.setSpacing(12)
         layout.addWidget(box)
         layout.addStretch()
         self.setLayout(layout)
