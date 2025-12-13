@@ -129,26 +129,48 @@ class ChatPanel(QWidget):
         self.scroll_area.setWidget(self.messages_container)
 
         self.input = SendTextEdit()
-        self.input.setPlaceholderText("请输入消息……")
-        self.input.setMinimumHeight(60)
-        self.input.setMaximumHeight(100)
+        self.input.setPlaceholderText("请输入消息，按 Enter 发送")
+        self.input.setMinimumHeight(48)
+        self.input.setMaximumHeight(80)
+        self.input.setFrame(False)
+        self.input.setStyleSheet(
+            "QPlainTextEdit { padding: 10px 6px; font-size: 14px; border: none; color: #e5e7eb;"
+            " background: transparent; }"
+            "QPlainTextEdit:disabled { color: #94a3b8; }"
+        )
         self.input.send_requested.connect(self.on_send_clicked)
+
         self.send_button = QPushButton("发送")
         self.send_button.clicked.connect(self.on_send_clicked)
         self.send_button.setAutoDefault(True)
-        self.send_button.setFixedSize(96, 40)
+        self.send_button.setFixedSize(64, 40)
+        self.send_button.setStyleSheet(
+            "QPushButton { background: #1d4ed8; color: white; border: none; border-radius: 10px;"
+            " padding: 8px 14px; font-weight: 600; }"
+            "QPushButton:hover { background: #265ee8; }"
+            "QPushButton:pressed { background: #1940a9; }"
+            "QPushButton:disabled { background: #334155; color: #cbd5e1; }"
+        )
 
-        input_layout = QHBoxLayout()
-        input_layout.setContentsMargins(10, 10, 10, 10)
-        input_layout.setSpacing(10)
-        input_layout.addWidget(self.input, stretch=1)
-        input_layout.addWidget(self.send_button, alignment=Qt.AlignBottom)
+        input_inner_layout = QHBoxLayout()
+        input_inner_layout.setContentsMargins(14, 10, 12, 10)
+        input_inner_layout.setSpacing(12)
+        input_inner_layout.addWidget(self.input, stretch=1)
+        input_inner_layout.addWidget(self.send_button, alignment=Qt.AlignRight | Qt.AlignVCenter)
+
+        self.input_container = QWidget()
+        self.input_container.setObjectName("inputContainer")
+        self.input_container.setLayout(input_inner_layout)
+        self.input_container.setMinimumHeight(60)
+        self.input_container.setStyleSheet(
+            "QWidget#inputContainer { background: #0d1628; border: 1.5px solid #1f2937; border-radius: 12px; }"
+        )
 
         layout = QVBoxLayout()
         layout.setContentsMargins(12, 10, 12, 12)
         layout.setSpacing(10)
         layout.addWidget(self.scroll_area)
-        layout.addLayout(input_layout)
+        layout.addWidget(self.input_container)
         self.setLayout(layout)
 
     def refresh_messages(self) -> None:
