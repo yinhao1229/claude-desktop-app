@@ -57,6 +57,12 @@ class AppState:
                 "api_key": "sk-xxxxx",
                 "model": "gpt-4o-mini",
             },
+            {
+                "name": "Claude Code",
+                "api_url": "https://api.anthropic.com",
+                "api_key": "",
+                "model": "claude-3.5-sonnet",
+            },
         ]
 
     @property

@@ -50,6 +50,16 @@ class ConfigPanel(QWidget):
         header_row.setSpacing(8)
         title_label = QLabel("模型与接口")
         title_label.setStyleSheet("font-size: 15px; font-weight: 700;")
+        self.claude_shortcut = QPushButton("Claude Code 快捷")
+        self.claude_shortcut.setCursor(Qt.PointingHandCursor)
+        self.claude_shortcut.setToolTip("一键套用 Claude Code 推荐配置")
+        self.claude_shortcut.setIcon(self.style().standardIcon(QStyle.SP_ArrowRight))
+        self.claude_shortcut.clicked.connect(self.apply_claude_code_preset)
+        self.toggle_button = QPushButton("显示配置")
+        self.toggle_button.setCheckable(True)
+        self.toggle_button.setChecked(False)
+        self.toggle_button.setCursor(Qt.PointingHandCursor)
+        self.toggle_button.clicked.connect(self.toggle_config_visibility)
         self.settings_button = QPushButton("设置")
         self.settings_button.setObjectName("settingsButton")
         self.settings_button.setIcon(self.style().standardIcon(QStyle.SP_FileDialogDetailedView))
@@ -58,6 +68,8 @@ class ConfigPanel(QWidget):
         self.settings_button.clicked.connect(self.open_custom_model_dialog)
         header_row.addWidget(title_label)
         header_row.addStretch()
+        header_row.addWidget(self.claude_shortcut)
+        header_row.addWidget(self.toggle_button)
         header_row.addWidget(self.settings_button)
 
         form = QFormLayout()
@@ -71,19 +83,20 @@ class ConfigPanel(QWidget):
         form.addRow("最大生成 Token", self.max_tokens_input)
         form.addRow("系统提示词", self.system_prompt_input)
 
-        box = QGroupBox("配置")
-        box.setLayout(form)
+        self.config_box = QGroupBox("配置")
+        self.config_box.setLayout(form)
 
         layout = QVBoxLayout()
         layout.setContentsMargins(12, 12, 12, 12)
         layout.setSpacing(12)
         layout.addLayout(header_row)
-        layout.addWidget(box)
+        layout.addWidget(self.config_box)
         layout.addStretch()
         self.setLayout(layout)
 
         self.refresh_presets()
         self.model_selector.currentIndexChanged.connect(self.apply_selected_preset)
+        self.toggle_config_visibility()
 
     def load_session(self) -> None:
         session = self.state.active_session
@@ -126,6 +139,31 @@ class ConfigPanel(QWidget):
         self.model_input.setText(preset.get("model", "mock"))
         self.api_url_input.setText(preset.get("api_url", ""))
         self.api_key_input.setText(preset.get("api_key", ""))
+
+    def apply_claude_code_preset(self) -> None:
+        preset = next((p for p in self.state.model_presets if p.get("name") == "Claude Code"), None)
+        if not preset:
+            preset = {
+                "name": "Claude Code",
+                "api_url": "https://api.anthropic.com",
+                "api_key": "",
+                "model": "claude-3.5-sonnet",
+            }
+            self.state.model_presets.append(preset)
+            self.refresh_presets()
+
+        index = next(
+            (i for i in range(self.model_selector.count()) if self.model_selector.itemText(i) == "Claude Code"),
+            -1,
+        )
+        if index >= 0:
+            self.model_selector.setCurrentIndex(index)
+            self.apply_selected_preset(index)
+
+    def toggle_config_visibility(self) -> None:
+        visible = self.toggle_button.isChecked()
+        self.config_box.setVisible(visible)
+        self.toggle_button.setText("隐藏配置" if visible else "显示配置")
 
     def open_custom_model_dialog(self) -> None:
         dialog = CustomModelDialog(self.state.model_presets, self)
