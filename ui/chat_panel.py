@@ -19,7 +19,11 @@ from PySide6.QtWidgets import (
 )
 
 from core.llm_client import LLMClient
-from core.markdown import parse_markdown_blocks, render_text_as_html
+from core.markdown import (
+    escape_text_as_html,
+    parse_markdown_blocks,
+    render_markdown_as_html,
+)
 from core.state import AppState, Message
 
 
@@ -36,7 +40,7 @@ class CodeBlockWidget(QWidget):
             "background-color: #0f172a; color: #e6e6e6; font-family: 'JetBrains Mono', 'Cascadia Code', monospace;"
             "padding: 10px; border: 1px solid #1f2937; border-radius: 10px;"
         )
-        self.code_label.setText(render_text_as_html(code))
+        self.code_label.setText(escape_text_as_html(code))
         copy_button = QPushButton("复制代码")
         copy_button.setFixedWidth(90)
         copy_button.clicked.connect(lambda: self.copy_code(code))
@@ -89,10 +93,12 @@ class MessageBubble(QWidget):
                 self.bubble_layout.addWidget(CodeBlockWidget(text))
             else:
                 label = QLabel()
-                label.setTextInteractionFlags(Qt.TextSelectableByMouse)
+                label.setTextInteractionFlags(Qt.TextSelectableByMouse | Qt.LinksAccessibleByMouse)
                 label.setWordWrap(True)
-                label.setText(render_text_as_html(text))
-                label.setStyleSheet("font-size: 14px; line-height: 1.5;")
+                label.setTextFormat(Qt.RichText)
+                label.setOpenExternalLinks(True)
+                label.setText(render_markdown_as_html(text))
+                label.setStyleSheet("font-size: 14px; line-height: 1.6; letter-spacing: 0.2px;")
                 self.bubble_layout.addWidget(label)
 
     def update_content(self, content: str) -> None:

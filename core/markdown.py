@@ -3,6 +3,8 @@ from __future__ import annotations
 import html
 from typing import List, Tuple
 
+import markdown2
+
 
 def parse_markdown_blocks(text: str) -> List[Tuple[str, str]]:
     """
@@ -31,6 +33,20 @@ def parse_markdown_blocks(text: str) -> List[Tuple[str, str]]:
     return blocks
 
 
-def render_text_as_html(text: str) -> str:
+def render_markdown_as_html(text: str) -> str:
+    """Render markdown text to safe HTML for QLabel rich text rendering."""
+    return markdown2.markdown(
+        text,
+        extras=[
+            "fenced-code-blocks",
+            "break-on-newline",
+            "strike",
+            "tables",
+            "task_list",
+        ],
+    )
+
+
+def escape_text_as_html(text: str) -> str:
     escaped = html.escape(text)
     return escaped.replace("\n", "<br>")

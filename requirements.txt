@@ -1,5 +1,6 @@
 PySide6>=6.6
 httpx>=0.26
+markdown2>=2.5
 
 # 可选：若要直接调用 Claude/其他 HTTP LLM，可安装以下库
 # anthropic>=0.30
