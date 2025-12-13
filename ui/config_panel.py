@@ -2,13 +2,18 @@ from __future__ import annotations
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
+    QDialog,
+    QDialogButtonBox,
     QComboBox,
     QFormLayout,
     QGroupBox,
+    QHBoxLayout,
     QLabel,
     QLineEdit,
     QPlainTextEdit,
+    QPushButton,
     QSpinBox,
+    QStyle,
     QVBoxLayout,
     QWidget,
 )
@@ -40,6 +45,21 @@ class ConfigPanel(QWidget):
         self.system_prompt_input.setPlaceholderText("为当前会话设置的系统提示语……")
         self.system_prompt_input.setMinimumHeight(140)
 
+        header_row = QHBoxLayout()
+        header_row.setContentsMargins(0, 0, 0, 0)
+        header_row.setSpacing(8)
+        title_label = QLabel("模型与接口")
+        title_label.setStyleSheet("font-size: 15px; font-weight: 700;")
+        self.settings_button = QPushButton("设置")
+        self.settings_button.setObjectName("settingsButton")
+        self.settings_button.setIcon(self.style().standardIcon(QStyle.SP_FileDialogDetailedView))
+        self.settings_button.setCursor(Qt.PointingHandCursor)
+        self.settings_button.setToolTip("添加或编辑自定义模型预设")
+        self.settings_button.clicked.connect(self.open_custom_model_dialog)
+        header_row.addWidget(title_label)
+        header_row.addStretch()
+        header_row.addWidget(self.settings_button)
+
         form = QFormLayout()
         form.setSpacing(12)
         form.setLabelAlignment(Qt.AlignLeft)
@@ -57,7 +77,7 @@ class ConfigPanel(QWidget):
         layout = QVBoxLayout()
         layout.setContentsMargins(12, 12, 12, 12)
         layout.setSpacing(12)
-        layout.addWidget(QLabel("模型与接口"))
+        layout.addLayout(header_row)
         layout.addWidget(box)
         layout.addStretch()
         self.setLayout(layout)
@@ -106,3 +126,67 @@ class ConfigPanel(QWidget):
         self.model_input.setText(preset.get("model", "mock"))
         self.api_url_input.setText(preset.get("api_url", ""))
         self.api_key_input.setText(preset.get("api_key", ""))
+
+    def open_custom_model_dialog(self) -> None:
+        dialog = CustomModelDialog(self.state.model_presets, self)
+        if dialog.exec() == QDialog.Accepted:
+            preset = dialog.get_preset()
+            existing = next((p for p in self.state.model_presets if p.get("name") == preset.get("name")), None)
+            if existing:
+                existing.update(preset)
+            else:
+                self.state.model_presets.append(preset)
+            self.refresh_presets()
+            self.model_selector.setCurrentIndex(self.model_selector.count() - 1)
+            self.apply_selected_preset(self.model_selector.currentIndex())
+
+
+class CustomModelDialog(QDialog):
+    def __init__(self, presets: list[dict[str, str]], parent: QWidget | None = None):
+        super().__init__(parent)
+        self.setWindowTitle("自定义模型设置")
+        self.setModal(True)
+        self.setFixedWidth(420)
+
+        self.name_input = QLineEdit()
+        self.name_input.setPlaceholderText("显示名称，例如：内部测试模型")
+        self.model_input = QLineEdit()
+        self.model_input.setPlaceholderText("模型 ID，例如：gpt-4o-mini")
+        self.url_input = QLineEdit()
+        self.url_input.setPlaceholderText("接口地址")
+        self.key_input = QLineEdit()
+        self.key_input.setPlaceholderText("密钥（可选）")
+        self.key_input.setEchoMode(QLineEdit.Password)
+
+        form = QFormLayout()
+        form.setSpacing(10)
+        form.addRow("名称", self.name_input)
+        form.addRow("模型", self.model_input)
+        form.addRow("接口 URL", self.url_input)
+        form.addRow("API Key", self.key_input)
+
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+
+        layout = QVBoxLayout()
+        layout.setContentsMargins(16, 16, 16, 12)
+        layout.setSpacing(12)
+        layout.addLayout(form)
+        layout.addWidget(buttons, alignment=Qt.AlignRight)
+        self.setLayout(layout)
+
+        if presets:
+            last = presets[-1]
+            self.name_input.setText(last.get("name", ""))
+            self.model_input.setText(last.get("model", ""))
+            self.url_input.setText(last.get("api_url", ""))
+            self.key_input.setText(last.get("api_key", ""))
+
+    def get_preset(self) -> dict[str, str]:
+        return {
+            "name": self.name_input.text().strip() or "自定义模型",
+            "model": self.model_input.text().strip() or "mock",
+            "api_url": self.url_input.text().strip(),
+            "api_key": self.key_input.text().strip(),
+        }
