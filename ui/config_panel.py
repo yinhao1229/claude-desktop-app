@@ -56,7 +56,7 @@ class ConfigPanel(QWidget):
         self.system_prompt_input.setMinimumHeight(140)
 
         self.model_status = QLabel("")
-        self.model_status.setStyleSheet("color: #cbd5e1; font-size: 12px;")
+        self.model_status.setObjectName("modelStatus")
         self.fetch_models_button = QPushButton("拉取模型")
         self.fetch_models_button.setCursor(Qt.PointingHandCursor)
         self.fetch_models_button.setToolTip("使用当前 URL 与 Key 获取可用模型列表")
@@ -66,7 +66,7 @@ class ConfigPanel(QWidget):
         header_row.setContentsMargins(0, 0, 0, 0)
         header_row.setSpacing(6)
         title_label = QLabel("模型与接口")
-        title_label.setStyleSheet("font-size: 15px; font-weight: 700;")
+        title_label.setObjectName("sectionTitle")
         self.claude_shortcut = QPushButton("Claude Code 快捷")
         self.claude_shortcut.setCursor(Qt.PointingHandCursor)
         self.claude_shortcut.setToolTip("一键套用 Claude Code 推荐配置")

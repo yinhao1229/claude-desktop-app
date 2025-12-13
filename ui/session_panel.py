@@ -38,7 +38,7 @@ class SessionPanel(QWidget):
         self.new_button.setFixedHeight(40)
 
         title = QLabel("会话")
-        title.setStyleSheet("font-size: 16px; font-weight: 700; letter-spacing: 0.5px;")
+        title.setObjectName("panelTitle")
 
         layout = QVBoxLayout()
         layout.setContentsMargins(12, 12, 12, 12)

@@ -13,6 +13,14 @@ from ui.config_panel import ConfigPanel
 from ui.session_panel import SessionPanel
 
 
+def apply_stylesheet(app: QApplication) -> None:
+    """加载统一的 QSS 样式文件，便于集中维护界面配色。"""
+
+    css_path = Path(__file__).resolve().parent.parent / "css" / "styles.qss"
+    if css_path.exists():
+        app.setStyleSheet(css_path.read_text(encoding="utf-8"))
+
+
 class MainWindow(QMainWindow):
     def __init__(self, state: AppState, storage_path: Path):
         super().__init__()
@@ -22,28 +30,6 @@ class MainWindow(QMainWindow):
 
         self.setWindowTitle("Cherry 风格聊天")
         self.resize(1200, 800)
-
-        self.setStyleSheet(
-            """
-            QMainWindow { background-color: #0a0f1a; color: #f1f5f9; }
-            QListWidget { background: #0f172a; border: 1px solid #334155; padding: 6px; }
-            QListWidget::item { padding: 10px; margin: 4px 2px; border-radius: 8px; color: #e5e7eb; }
-            QListWidget::item:selected { background: #2563eb; color: white; }
-            QListWidget::item:hover { background: #1e293b; }
-            QPushButton { background: #2563eb; color: #f8fafc; border: 1px solid #1d4ed8; padding: 8px 12px; border-radius: 8px; font-weight: 600; }
-            QPushButton:hover:!disabled { background: #1d4ed8; }
-            QPushButton:disabled { background: #334155; color: #cbd5e1; border-color: #334155; }
-            QPushButton#settingsButton { background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #22d3ee, stop:1 #2563eb); border: 1px solid #1d4ed8; padding: 8px 14px; border-radius: 10px; font-weight: 700; }
-            QPushButton#settingsButton:hover { background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #38e0ff, stop:1 #2e6ff5); color: #f8fafc; }
-            QPushButton#settingsButton:pressed { background: #1e40af; padding-top: 9px; padding-bottom: 7px; }
-            QPlainTextEdit, QLineEdit, QComboBox { background: #0f172a; color: #e2e8f0; border: 1px solid #334155; border-radius: 10px; padding: 8px 10px; selection-background-color: #2563eb; selection-color: white; }
-            QGroupBox { border: 1px solid #334155; border-radius: 10px; margin-top: 10px; padding: 12px; }
-            QGroupBox::title { subcontrol-origin: margin; left: 12px; padding: 0 6px; color: #cbd5e1; }
-            QLabel { color: #e2e8f0; }
-            QScrollArea { border: none; }
-            QFormLayout > * { color: #e5e7eb; }
-            """
-        )
 
         self.session_panel = SessionPanel(self.state)
         self.session_panel.session_selected.connect(self.on_session_selected)
@@ -106,6 +92,7 @@ class MainWindow(QMainWindow):
 
 def run_app(state: AppState, storage_path: Path) -> None:
     app = QApplication.instance() or QApplication([])
+    apply_stylesheet(app)
     window = MainWindow(state, storage_path)
     window.show()
     app.exec()

@@ -36,15 +36,12 @@ class CodeBlockWidget(QWidget):
 
         self.code_label = QLabel()
         self.code_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
-        self.code_label.setStyleSheet(
-            "background-color: #0f172a; color: #e6e6e6; font-family: 'JetBrains Mono', 'Cascadia Code', monospace;"
-            "padding: 10px; border: 1px solid #1f2937; border-radius: 10px;"
-        )
+        self.code_label.setObjectName("codeLabel")
         self.code_label.setText(escape_text_as_html(code))
         copy_button = QPushButton("复制代码")
         copy_button.setFixedWidth(90)
         copy_button.clicked.connect(lambda: self.copy_code(code))
-        copy_button.setStyleSheet("padding: 6px 10px; font-weight: 600;")
+        copy_button.setObjectName("copyButton")
 
         layout.addWidget(copy_button, alignment=Qt.AlignRight)
         layout.addWidget(self.code_label)
@@ -71,11 +68,8 @@ class MessageBubble(QWidget):
         self.bubble_layout.setContentsMargins(14, 10, 14, 12)
         self.bubble_layout.setSpacing(8)
         self.bubble.setLayout(self.bubble_layout)
-        self.bubble.setStyleSheet(
-            "background-color: #1d4ed8; color: white; border-radius: 12px;"
-            if align_right
-            else "background-color: #0f172a; color: #e5e7eb; border: 1px solid #1f2937; border-radius: 12px;"
-        )
+        # 使用不同的 objectName 让样式表区分用户与助手气泡
+        self.bubble.setObjectName("userBubble" if align_right else "assistantBubble")
 
         self.render_content(message.content)
         layout.addWidget(self.bubble, alignment=Qt.AlignRight if align_right else Qt.AlignLeft)
@@ -98,7 +92,7 @@ class MessageBubble(QWidget):
                 label.setTextFormat(Qt.RichText)
                 label.setOpenExternalLinks(True)
                 label.setText(render_markdown_as_html(text))
-                label.setStyleSheet("font-size: 14px; line-height: 1.6; letter-spacing: 0.2px;")
+                label.setObjectName("messageLabel")
                 self.bubble_layout.addWidget(label)
 
     def update_content(self, content: str) -> None:
@@ -126,7 +120,7 @@ class ChatPanel(QWidget):
 
         self.scroll_area = QScrollArea()
         self.scroll_area.setWidgetResizable(True)
-        self.scroll_area.setStyleSheet("background: #0b1221;")
+        self.scroll_area.setObjectName("chatScroll")
         self.messages_container = QWidget()
         self.messages_layout = QVBoxLayout()
         self.messages_layout.setContentsMargins(24, 16, 24, 24)
@@ -136,29 +130,19 @@ class ChatPanel(QWidget):
         self.scroll_area.setWidget(self.messages_container)
 
         self.input = SendTextEdit()
+        self.input.setObjectName("chatInput")
         self.input.setPlaceholderText("请输入消息，按 Enter 发送")
         self.input.setMinimumHeight(48)
         self.input.setMaximumHeight(80)
         self.input.setFrameStyle(QFrame.NoFrame)
-        self.input.setStyleSheet(
-            "QPlainTextEdit { padding: 10px 6px; font-size: 14px; border: none; color: #e5e7eb;"
-            " background: transparent; }"
-            "QPlainTextEdit:disabled { color: #94a3b8; }"
-        )
         self.input.send_requested.connect(self.on_send_clicked)
 
         self.send_button = QPushButton("发送")
+        self.send_button.setObjectName("sendButton")
         self.send_button.clicked.connect(self.on_send_clicked)
         self.send_button.setAutoDefault(True)
         self.send_button.setMinimumHeight(40)
         self.send_button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        self.send_button.setStyleSheet(
-            "QPushButton { background: #1d4ed8; color: white; border: none; border-radius: 10px;"
-            " padding: 10px 16px; font-weight: 700; }"
-            "QPushButton:hover { background: #265ee8; }"
-            "QPushButton:pressed { background: #1940a9; }"
-            "QPushButton:disabled { background: #334155; color: #cbd5e1; }"
-        )
 
         input_inner_layout = QHBoxLayout()
         input_inner_layout.setContentsMargins(14, 10, 12, 10)
@@ -170,9 +154,6 @@ class ChatPanel(QWidget):
         self.input_container.setObjectName("inputContainer")
         self.input_container.setLayout(input_inner_layout)
         self.input_container.setMinimumHeight(60)
-        self.input_container.setStyleSheet(
-            "QWidget#inputContainer { background: #0d1628; border: 1.5px solid #1f2937; border-radius: 12px; }"
-        )
 
         layout = QVBoxLayout()
         layout.setContentsMargins(12, 10, 12, 12)
