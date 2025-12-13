@@ -30,6 +30,9 @@ class Session:
     system_prompt: str = ""
     temperature: float = 1.0
     max_tokens: Optional[int] = None
+    api_url: str = ""
+    api_key: str = ""
+    model: str = "mock"
 
     def add_message(self, message: Message) -> None:
         self.messages.append(message)
@@ -41,6 +44,20 @@ class AppState:
         self.sessions: Dict[str, Session] = {}
         self.active_session_id: Optional[str] = None
         self.is_generating: bool = False
+        self.model_presets: List[Dict[str, str]] = [
+            {
+                "name": "Mock 本地服务",
+                "api_url": "http://localhost:8000",
+                "api_key": "mock-key",
+                "model": "mock",
+            },
+            {
+                "name": "OpenAI 兼容",
+                "api_url": "https://api.openai.com/v1",
+                "api_key": "sk-xxxxx",
+                "model": "gpt-4o-mini",
+            },
+        ]
 
     @property
     def active_session(self) -> Optional[Session]:
@@ -51,12 +68,16 @@ class AppState:
     def create_session(self, title: str = "新对话") -> Session:
         session_id = str(uuid.uuid4())
         ts = now_ts()
+        default_preset = self.model_presets[0] if self.model_presets else None
         session = Session(
             id=session_id,
             title=title,
             created_at=ts,
             updated_at=ts,
             messages=[],
+            api_url=default_preset.get("api_url", "") if default_preset else "",
+            api_key=default_preset.get("api_key", "") if default_preset else "",
+            model=default_preset.get("model", "mock") if default_preset else "mock",
         )
         self.sessions[session_id] = session
         self.active_session_id = session_id
@@ -98,10 +119,14 @@ class AppState:
                     "system_prompt": s.system_prompt,
                     "temperature": s.temperature,
                     "max_tokens": s.max_tokens,
+                    "api_url": s.api_url,
+                    "api_key": s.api_key,
+                    "model": s.model,
                 }
                 for s in self.sessions.values()
             ],
             "active_session_id": self.active_session_id,
+            "model_presets": self.model_presets,
         }
 
     @classmethod
@@ -118,7 +143,11 @@ class AppState:
                 system_prompt=session_data.get("system_prompt", ""),
                 temperature=float(session_data.get("temperature", 1.0)),
                 max_tokens=session_data.get("max_tokens"),
+                api_url=session_data.get("api_url", ""),
+                api_key=session_data.get("api_key", ""),
+                model=session_data.get("model", "mock"),
             )
             state.sessions[session.id] = session
         state.active_session_id = data.get("active_session_id") or next(iter(state.sessions), None)
+        state.model_presets = data.get("model_presets", state.model_presets)
         return state

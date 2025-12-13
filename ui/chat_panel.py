@@ -212,7 +212,15 @@ class ChatPanel(QWidget):
         if not session:
             return
         try:
-            stream = self.llm_client.stream(session.messages, system_prompt=session.system_prompt, temperature=session.temperature, max_tokens=session.max_tokens)
+            stream = self.llm_client.stream(
+                session.messages,
+                system_prompt=session.system_prompt,
+                temperature=session.temperature,
+                max_tokens=session.max_tokens,
+                api_url=session.api_url,
+                api_key=session.api_key,
+                model=session.model,
+            )
             self.append_stream(stream)
         except Exception:
             self.set_loading(False)

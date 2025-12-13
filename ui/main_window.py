@@ -25,17 +25,18 @@ class MainWindow(QMainWindow):
 
         self.setStyleSheet(
             """
-            QMainWindow { background-color: #0b1221; color: #e5e7eb; }
-            QListWidget { background: #0f172a; border: 1px solid #1f2937; padding: 6px; }
+            QMainWindow { background-color: #0a0f1a; color: #f1f5f9; }
+            QListWidget { background: #0f172a; border: 1px solid #334155; padding: 6px; }
             QListWidget::item { padding: 10px; margin: 4px 2px; border-radius: 8px; color: #e5e7eb; }
-            QListWidget::item:selected { background: #1d4ed8; color: white; }
-            QPushButton { background: #1d4ed8; color: white; border: none; padding: 8px 12px; border-radius: 8px; font-weight: 600; }
-            QPushButton:hover:!disabled { background: #2563eb; }
-            QPushButton:disabled { background: #334155; color: #cbd5e1; }
-            QPlainTextEdit { background: #0b1221; color: #e5e7eb; border: 1px solid #1f2937; border-radius: 10px; padding: 10px; }
-            QGroupBox { border: 1px solid #1f2937; border-radius: 10px; margin-top: 10px; padding: 12px; }
-            QGroupBox::title { subcontrol-origin: margin; left: 12px; padding: 0 6px; color: #9ca3af; }
-            QLabel { color: #e5e7eb; }
+            QListWidget::item:selected { background: #2563eb; color: white; }
+            QListWidget::item:hover { background: #1e293b; }
+            QPushButton { background: #2563eb; color: #f8fafc; border: 1px solid #1d4ed8; padding: 8px 12px; border-radius: 8px; font-weight: 600; }
+            QPushButton:hover:!disabled { background: #1d4ed8; }
+            QPushButton:disabled { background: #334155; color: #cbd5e1; border-color: #334155; }
+            QPlainTextEdit, QLineEdit, QComboBox { background: #0f172a; color: #e2e8f0; border: 1px solid #334155; border-radius: 10px; padding: 8px 10px; selection-background-color: #2563eb; selection-color: white; }
+            QGroupBox { border: 1px solid #334155; border-radius: 10px; margin-top: 10px; padding: 12px; }
+            QGroupBox::title { subcontrol-origin: margin; left: 12px; padding: 0 6px; color: #cbd5e1; }
+            QLabel { color: #e2e8f0; }
             QScrollArea { border: none; }
             QFormLayout > * { color: #e5e7eb; }
             """
