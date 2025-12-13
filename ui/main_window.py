@@ -52,7 +52,7 @@ class MainWindow(QMainWindow):
         self.session_panel.new_session_requested.connect(self.on_new_session)
 
         self.chat_panel = ChatPanel(self.state, self.llm_client, on_state_changed=self.persist_state)
-        self.config_panel = ConfigPanel(self.state)
+        self.config_panel = ConfigPanel(self.state, self.llm_client)
 
         splitter = QSplitter(Qt.Horizontal)
         splitter.addWidget(self.session_panel)

@@ -2,14 +2,15 @@ from __future__ import annotations
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
+    QComboBox,
     QDialog,
     QDialogButtonBox,
-    QComboBox,
     QFormLayout,
     QGroupBox,
     QHBoxLayout,
     QLabel,
     QLineEdit,
+    QMessageBox,
     QPlainTextEdit,
     QPushButton,
     QSpinBox,
@@ -18,19 +19,28 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from core.llm_client import LLMClient
 from core.state import AppState
 
 
 class ConfigPanel(QWidget):
-    def __init__(self, state: AppState):
+    def __init__(self, state: AppState, llm_client: LLMClient):
         super().__init__()
         self.state = state
+        self.llm_client = llm_client
+        self.available_models: list[str] = []
 
         self.setMinimumWidth(280)
 
         self.model_selector = QComboBox()
         self.model_selector.setPlaceholderText("快速切换预设")
-        self.model_input = QLineEdit("mock")
+        self.model_input = QComboBox()
+        self.model_input.setEditable(True)
+        self.model_input.setInsertPolicy(QComboBox.NoInsert)
+        self.model_input.setPlaceholderText("选择或填写模型 ID")
+        self.model_input.setMinimumWidth(200)
+        self.model_input.setSizeAdjustPolicy(QComboBox.AdjustToContents)
+        self.model_input.setCurrentText("mock")
         self.api_url_input = QLineEdit()
         self.api_url_input.setPlaceholderText("例如：https://api.openai.com/v1")
         self.api_key_input = QLineEdit()
@@ -44,6 +54,13 @@ class ConfigPanel(QWidget):
         self.system_prompt_input = QPlainTextEdit()
         self.system_prompt_input.setPlaceholderText("为当前会话设置的系统提示语……")
         self.system_prompt_input.setMinimumHeight(140)
+
+        self.model_status = QLabel("")
+        self.model_status.setStyleSheet("color: #cbd5e1; font-size: 12px;")
+        self.fetch_models_button = QPushButton("拉取模型")
+        self.fetch_models_button.setCursor(Qt.PointingHandCursor)
+        self.fetch_models_button.setToolTip("使用当前 URL 与 Key 获取可用模型列表")
+        self.fetch_models_button.clicked.connect(self.fetch_models)
 
         header_row = QHBoxLayout()
         header_row.setContentsMargins(0, 0, 0, 0)
@@ -76,12 +93,17 @@ class ConfigPanel(QWidget):
         form.setSpacing(12)
         form.setLabelAlignment(Qt.AlignLeft)
         form.addRow("快速预设", self.model_selector)
-        form.addRow("模型", self.model_input)
+        model_row = QHBoxLayout()
+        model_row.setSpacing(8)
+        model_row.addWidget(self.model_input, stretch=1)
+        model_row.addWidget(self.fetch_models_button)
+        form.addRow("模型", model_row)
         form.addRow("接口 URL", self.api_url_input)
         form.addRow("API Key", self.api_key_input)
         form.addRow("温度", self.temperature_input)
         form.addRow("最大生成 Token", self.max_tokens_input)
         form.addRow("系统提示词", self.system_prompt_input)
+        form.addRow("可用模型", self.model_status)
 
         self.config_box = QGroupBox("配置")
         self.config_box.setLayout(form)
@@ -96,13 +118,15 @@ class ConfigPanel(QWidget):
 
         self.refresh_presets()
         self.model_selector.currentIndexChanged.connect(self.apply_selected_preset)
+        self.api_url_input.editingFinished.connect(self.maybe_auto_fetch_models)
+        self.api_key_input.editingFinished.connect(self.maybe_auto_fetch_models)
         self.toggle_config_visibility()
 
     def load_session(self) -> None:
         session = self.state.active_session
         if not session:
             return
-        self.model_input.setText(session.model)
+        self.model_input.setCurrentText(session.model)
         self.api_url_input.setText(session.api_url)
         self.api_key_input.setText(session.api_key)
         self.temperature_input.setText(str(session.temperature))
@@ -119,7 +143,7 @@ class ConfigPanel(QWidget):
             session.temperature = 1.0
         session.system_prompt = self.system_prompt_input.toPlainText()
         session.max_tokens = self.max_tokens_input.value() or None
-        session.model = self.model_input.text().strip() or "mock"
+        session.model = self.model_input.currentText().strip() or "mock"
         session.api_url = self.api_url_input.text().strip()
         session.api_key = self.api_key_input.text().strip()
 
@@ -136,9 +160,10 @@ class ConfigPanel(QWidget):
         preset = self.model_selector.itemData(index)
         if not preset:
             return
-        self.model_input.setText(preset.get("model", "mock"))
+        self.model_input.setCurrentText(preset.get("model", "mock"))
         self.api_url_input.setText(preset.get("api_url", ""))
         self.api_key_input.setText(preset.get("api_key", ""))
+        self.maybe_auto_fetch_models()
 
     def apply_claude_code_preset(self) -> None:
         preset = next((p for p in self.state.model_presets if p.get("name") == "Claude Code"), None)
@@ -164,6 +189,40 @@ class ConfigPanel(QWidget):
         visible = self.toggle_button.isChecked()
         self.config_box.setVisible(visible)
         self.toggle_button.setText("隐藏配置" if visible else "显示配置")
+
+    def fetch_models(self) -> None:
+        api_url = self.api_url_input.text().strip()
+        api_key = self.api_key_input.text().strip()
+        if not api_url or not api_key:
+            QMessageBox.information(self, "缺少信息", "请先填写接口 URL 与 API Key")
+            return
+        self.model_status.setText("拉取中…")
+        try:
+            models = self.llm_client.list_models(api_url, api_key)
+        except Exception:
+            QMessageBox.critical(self, "获取失败", "拉取模型列表时出错，请检查接口或密钥")
+            self.model_status.setText("获取失败")
+            return
+        if not models:
+            self.model_status.setText("未获取到模型")
+            return
+        self.available_models = models
+        self.model_input.blockSignals(True)
+        self.model_input.clear()
+        self.model_input.addItems(models)
+        self.model_input.setCurrentIndex(0)
+        self.model_input.blockSignals(False)
+        self.model_status.setText(f"已获取 {len(models)} 个模型")
+
+    def maybe_auto_fetch_models(self) -> None:
+        api_url = self.api_url_input.text().strip()
+        api_key = self.api_key_input.text().strip()
+        if not api_url or not api_key:
+            return
+        if "xxxxx" in api_key or api_key.lower().startswith("mock"):
+            self.model_status.setText("使用真实密钥后可自动获取模型")
+            return
+        self.fetch_models()
 
     def open_custom_model_dialog(self) -> None:
         dialog = CustomModelDialog(self.state.model_presets, self)

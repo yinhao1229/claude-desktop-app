@@ -7,6 +7,7 @@
 - **会话管理**：支持新建、切换、重命名、删除会话，历史保存到 `data/sessions.json`。
 - **聊天体验**：用户/助手气泡、基础 Markdown 解析，代码块等宽字体显示并可一键复制，新消息自动滚动到底部。
 - **会话级配置**：每个会话保存 system prompt、temperature、max tokens，并支持自定义接口 URL、API Key 与模型名。
+- **OpenAI 标准模型拉取**：配置好 URL 与 Key 后，可自动请求 `/models` 接口获取可用模型，并在下拉框中直接选择。
 - **快速预设切换**：在配置面板中可一键选择常用模型预设，覆盖当前会话的接口与模型设置。
 - **设置按钮**：通过右栏的「设置」按钮弹窗新增自定义模型预设（含 URL、Key、模型名），并以高亮按钮和图标强调可点状态。
 - **Claude Code 快捷键**：右栏提供一键填充 Claude Code 推荐配置的按钮，便于快速切换到代码模型。
@@ -14,16 +15,16 @@
 - **模拟 LLM 后端**：`MockLLMClient` 使用流式生成器实现简单的回显响应，方便 UI 演示。
 
 ## 运行方式
-可通过 `requirements.txt` 安装基础依赖（当前仅包含 PySide6）：
+可通过 `requirements.txt` 安装基础依赖（包含 PySide6 与 httpx）：
 
 ```bash
 pip install -r requirements.txt
 ```
 
-如需直接接入 Claude/其他 HTTP LLM，可额外安装对应 SDK 或 HTTP 客户端，例如：
+如需直接接入 Claude/其他 HTTP LLM，可额外安装对应 SDK，例如：
 
 ```bash
-pip install anthropic httpx
+pip install anthropic
 ```
 
 然后启动应用：
