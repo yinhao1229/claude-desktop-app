@@ -3,7 +3,6 @@ from __future__ import annotations
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
     QLabel,
-    QListWidget,
     QListWidgetItem,
     QMenu,
     QPushButton,
@@ -14,6 +13,7 @@ from PySide6.QtWidgets import (
 )
 
 from core.state import AppState, Session
+from ui.widgets import AutoHideListWidget
 
 
 class SessionPanel(QWidget):
@@ -26,7 +26,7 @@ class SessionPanel(QWidget):
         super().__init__()
         self.state = state
 
-        self.list_widget = QListWidget()
+        self.list_widget = AutoHideListWidget()
         self.list_widget.itemClicked.connect(self.on_item_clicked)
         self.list_widget.setContextMenuPolicy(Qt.CustomContextMenu)
         self.list_widget.customContextMenuRequested.connect(self.show_context_menu)

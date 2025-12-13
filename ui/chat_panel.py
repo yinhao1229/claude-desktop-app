@@ -10,8 +10,6 @@ from PySide6.QtWidgets import (
     QLabel,
     QMessageBox,
     QPushButton,
-    QPlainTextEdit,
-    QScrollArea,
     QSpacerItem,
     QSizePolicy,
     QVBoxLayout,
@@ -25,6 +23,7 @@ from core.markdown import (
     render_markdown_as_html,
 )
 from core.state import AppState, Message
+from ui.widgets import AutoHidePlainTextEdit, AutoHideScrollArea
 
 
 class CodeBlockWidget(QWidget):
@@ -99,7 +98,7 @@ class MessageBubble(QWidget):
         self.render_content(content)
 
 
-class SendTextEdit(QPlainTextEdit):
+class SendTextEdit(AutoHidePlainTextEdit):
     send_requested = Signal()
 
     def keyPressEvent(self, event):  # type: ignore[override]
@@ -118,7 +117,7 @@ class ChatPanel(QWidget):
         self.on_state_changed = on_state_changed
         self.message_widgets: list[MessageBubble] = []
 
-        self.scroll_area = QScrollArea()
+        self.scroll_area = AutoHideScrollArea()
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setObjectName("chatScroll")
         self.messages_container = QWidget()

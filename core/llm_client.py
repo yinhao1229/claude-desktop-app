@@ -41,7 +41,7 @@ class LLMClient:
 
 
 class MockLLMClient(LLMClient):
-    """Simple mock client that echoes the last user message."""
+    """Simple mock client that reflects the last user message with Markdown hints."""
 
     def send(
         self,
@@ -57,8 +57,8 @@ class MockLLMClient(LLMClient):
         if not user_messages:
             return "你好！我能为你做些什么？"
         prompt = user_messages[-1].content
-        model_hint = f"（模型：{model or 'mock'}）" if model else ""
-        return f"回声：{prompt} {model_hint}".strip()
+        model_hint = f"> 使用模型：**{model or 'mock'}**\n\n" if model else ""
+        return f"{model_hint}{prompt}\n\n- 自动回复仅供演示\n- 支持 **Markdown** 与 ```代码块``` 展示"
 
     def stream(
         self,
@@ -71,9 +71,9 @@ class MockLLMClient(LLMClient):
         model: str | None = None,
     ) -> Generator[str, None, None]:
         response = self.send(messages, system_prompt, temperature, max_tokens, api_url, api_key, model)
-        for chunk in response.split():
-            yield chunk + " "
-            time.sleep(0.1)
+        for char in response:
+            yield char
+            time.sleep(0.01)
 
     def list_models(self, api_url: str, api_key: str) -> List[str]:
         # Mock返回一组演示模型

@@ -11,7 +11,6 @@ from PySide6.QtWidgets import (
     QLabel,
     QLineEdit,
     QMessageBox,
-    QPlainTextEdit,
     QPushButton,
     QSpinBox,
     QStyle,
@@ -21,6 +20,7 @@ from PySide6.QtWidgets import (
 
 from core.llm_client import LLMClient
 from core.state import AppState
+from ui.widgets import AutoHidePlainTextEdit
 
 
 class ConfigPanel(QWidget):
@@ -51,7 +51,7 @@ class ConfigPanel(QWidget):
         self.max_tokens_input.setRange(1, 16384)
         self.max_tokens_input.setSpecialValueText("无")
         self.max_tokens_input.setValue(0)
-        self.system_prompt_input = QPlainTextEdit()
+        self.system_prompt_input = AutoHidePlainTextEdit()
         self.system_prompt_input.setPlaceholderText("为当前会话设置的系统提示语……")
         self.system_prompt_input.setMinimumHeight(140)
 
