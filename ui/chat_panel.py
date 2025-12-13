@@ -144,10 +144,11 @@ class ChatPanel(QWidget):
         self.send_button = QPushButton("发送")
         self.send_button.clicked.connect(self.on_send_clicked)
         self.send_button.setAutoDefault(True)
-        self.send_button.setFixedSize(64, 40)
+        self.send_button.setMinimumHeight(40)
+        self.send_button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.send_button.setStyleSheet(
             "QPushButton { background: #1d4ed8; color: white; border: none; border-radius: 10px;"
-            " padding: 8px 14px; font-weight: 600; }"
+            " padding: 10px 16px; font-weight: 700; }"
             "QPushButton:hover { background: #265ee8; }"
             "QPushButton:pressed { background: #1940a9; }"
             "QPushButton:disabled { background: #334155; color: #cbd5e1; }"
@@ -156,8 +157,8 @@ class ChatPanel(QWidget):
         input_inner_layout = QHBoxLayout()
         input_inner_layout.setContentsMargins(14, 10, 12, 10)
         input_inner_layout.setSpacing(12)
-        input_inner_layout.addWidget(self.input, stretch=1)
-        input_inner_layout.addWidget(self.send_button, alignment=Qt.AlignRight | Qt.AlignVCenter)
+        input_inner_layout.addWidget(self.input, stretch=8)
+        input_inner_layout.addWidget(self.send_button, stretch=2, alignment=Qt.AlignRight | Qt.AlignVCenter)
 
         self.input_container = QWidget()
         self.input_container.setObjectName("inputContainer")
