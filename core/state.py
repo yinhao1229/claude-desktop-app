@@ -1,0 +1,159 @@
+from __future__ import annotations
+
+import datetime as dt
+import uuid
+from dataclasses import dataclass, field
+from typing import Dict, List, Optional
+
+
+ISO_FORMAT = "%Y-%m-%dT%H:%M:%S"
+
+
+def now_ts() -> str:
+    return dt.datetime.now().strftime(ISO_FORMAT)
+
+
+@dataclass
+class Message:
+    role: str
+    content: str
+    ts: str = field(default_factory=now_ts)
+
+
+@dataclass
+class Session:
+    id: str
+    title: str
+    created_at: str
+    updated_at: str
+    messages: List[Message] = field(default_factory=list)
+    system_prompt: str = ""
+    temperature: float = 1.0
+    max_tokens: Optional[int] = None
+    api_url: str = ""
+    api_key: str = ""
+    model: str = "mock"
+
+    def add_message(self, message: Message) -> None:
+        self.messages.append(message)
+        self.updated_at = now_ts()
+
+
+class AppState:
+    def __init__(self) -> None:
+        self.sessions: Dict[str, Session] = {}
+        self.active_session_id: Optional[str] = None
+        self.is_generating: bool = False
+        self.model_presets: List[Dict[str, str]] = [
+            {
+                "name": "Mock 本地服务",
+                "api_url": "http://localhost:8000",
+                "api_key": "mock-key",
+                "model": "mock",
+            },
+            {
+                "name": "OpenAI 兼容",
+                "api_url": "https://api.openai.com/v1",
+                "api_key": "sk-xxxxx",
+                "model": "gpt-4o-mini",
+            },
+            {
+                "name": "Claude Code",
+                "api_url": "https://api.anthropic.com",
+                "api_key": "",
+                "model": "claude-3.5-sonnet",
+            },
+        ]
+
+    @property
+    def active_session(self) -> Optional[Session]:
+        if self.active_session_id:
+            return self.sessions.get(self.active_session_id)
+        return None
+
+    def create_session(self, title: str = "新对话") -> Session:
+        session_id = str(uuid.uuid4())
+        ts = now_ts()
+        default_preset = self.model_presets[0] if self.model_presets else None
+        session = Session(
+            id=session_id,
+            title=title,
+            created_at=ts,
+            updated_at=ts,
+            messages=[],
+            api_url=default_preset.get("api_url", "") if default_preset else "",
+            api_key=default_preset.get("api_key", "") if default_preset else "",
+            model=default_preset.get("model", "mock") if default_preset else "mock",
+        )
+        self.sessions[session_id] = session
+        self.active_session_id = session_id
+        return session
+
+    def delete_session(self, session_id: str) -> None:
+        if session_id in self.sessions:
+            del self.sessions[session_id]
+            if self.active_session_id == session_id:
+                self.active_session_id = next(iter(self.sessions), None)
+
+    def rename_session(self, session_id: str, title: str) -> None:
+        session = self.sessions.get(session_id)
+        if session:
+            session.title = title
+            session.updated_at = now_ts()
+
+    def set_active_session(self, session_id: str) -> None:
+        if session_id in self.sessions:
+            self.active_session_id = session_id
+
+    def add_message(self, role: str, content: str) -> Message:
+        session = self.active_session
+        if not session:
+            raise RuntimeError("没有激活的会话")
+        message = Message(role=role, content=content)
+        session.add_message(message)
+        return message
+
+    def to_dict(self) -> Dict[str, Dict]:
+        return {
+            "sessions": [
+                {
+                    "id": s.id,
+                    "title": s.title,
+                    "created_at": s.created_at,
+                    "updated_at": s.updated_at,
+                    "messages": [m.__dict__ for m in s.messages],
+                    "system_prompt": s.system_prompt,
+                    "temperature": s.temperature,
+                    "max_tokens": s.max_tokens,
+                    "api_url": s.api_url,
+                    "api_key": s.api_key,
+                    "model": s.model,
+                }
+                for s in self.sessions.values()
+            ],
+            "active_session_id": self.active_session_id,
+            "model_presets": self.model_presets,
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict) -> "AppState":
+        state = cls()
+        for session_data in data.get("sessions", []):
+            messages = [Message(**m) for m in session_data.get("messages", [])]
+            session = Session(
+                id=session_data["id"],
+                title=session_data.get("title", "新对话"),
+                created_at=session_data.get("created_at", now_ts()),
+                updated_at=session_data.get("updated_at", now_ts()),
+                messages=messages,
+                system_prompt=session_data.get("system_prompt", ""),
+                temperature=float(session_data.get("temperature", 1.0)),
+                max_tokens=session_data.get("max_tokens"),
+                api_url=session_data.get("api_url", ""),
+                api_key=session_data.get("api_key", ""),
+                model=session_data.get("model", "mock"),
+            )
+            state.sessions[session.id] = session
+        state.active_session_id = data.get("active_session_id") or next(iter(state.sessions), None)
+        state.model_presets = data.get("model_presets", state.model_presets)
+        return state
